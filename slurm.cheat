@@ -1,0 +1,16 @@
+% slurm
+
+# process watcher
+watch -n 1 'RUNNING=$(squeue -t running); PENDING=$(squeue -t pending); echo PENDING $(echo "$PENDING"|tail -n +2|wc -l); echo RUNNING $(echo "$RUNNING"|tail -n +2|wc -l); echo "$RUNNING"|tail -n +2|awk "{print \$2}"|sort|uniq -c; echo NAMELABEL; echo "$RUNNING"|tail -n +2 | awk "{print \$3}" | tr -d "[:digit:]" | sort | uniq -c;squeue'
+
+# flood sleep jobs
+for n in $(seq $((1 + $RESCALE_CORES_PER_SLOT))); do srun sleep 4 & done
+
+# flood stress-cpu jobs
+for n in $(seq $((1 + $RESCALE_CORES_PER_SLOT))); do srun timeout 5 stress-ng --cpu 1 & done
+
+# flood gpu_burn jobs
+cd $HOME/work/shared; for n in $(seq $((1 + $RESCALE_GPUS_PER_SLOT))); do srun --gres=gpu:1 timeout 15 $PWD/gpu_burn & done
+
+# flood cpu+gpu jobs
+cd $HOME/work/shared; for n in $(seq $((1 + $RESCALE_CORES_PER_SLOT))); do if [ $n -le $RESCALE_GPUS_PER_SLOT ]; then srun -J `printf "_G%02d" $n` --gres=gpu:1 --cpus-per-gpu=1 timeout 15 $PWD/gpu_burn; else srun -J `printf "C_%02d" $n` timeout 60 stress-ng --cpu 1; fi & done

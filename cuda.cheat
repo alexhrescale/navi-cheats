@@ -1,0 +1,16 @@
+% nvidia, cuda
+
+# gpu process monitor
+nvidia-smi pmon
+
+# run pmon for 1 sample
+nvidia-smi pmon -c 1
+
+# print up to stream multiprocessor clock column
+nvidia-smi pmon -c 1 -o DT -s u | cut -c -50
+
+# compact coulmn
+nvidia-smi pmon -c 1 -o DT -s u | cut -c -10,13-21,24-28,33-39,48-51,72- | sed '2d'
+
+# gpu watcher
+watch "nvidia-smi pmon -c 1 -o DT -s u | cut -c -10,13-21,24-28,33-39,48-51,72- | sed '2d'"
